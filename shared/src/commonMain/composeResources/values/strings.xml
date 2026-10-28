@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Collage</string>
+
+    <!-- Home -->
+    <string name="home_hint">Select up to %1$d photos to make a layout</string>
+    <string name="home_selected_count">%1$d of %2$d selected</string>
+    <string name="home_clear">Clear</string>
+    <string name="home_tab_gallery">Gallery</string>
+    <string name="home_tab_faces">Faces</string>
+    <string name="home_photo_booth">Photo Booth</string>
+    <string name="home_browse">Browse photos</string>
+    <string name="home_limit_reached">You can select up to %1$d photos</string>
+    <string name="home_layout_option">Layout %1$d</string>
+    <string name="home_selection_badge">Selected, number %1$d</string>
+    <string name="permission_title">See your photos</string>
+    <string name="permission_body">Allow access to your photos to pick them for a layout. You can also browse with the system photo picker.</string>
+    <string name="permission_allow">Allow access</string>
+    <string name="permission_settings">Open settings</string>
+    <string name="permission_partial">You’ve given access to selected photos only.</string>
+    <string name="permission_manage">Manage</string>
+    <string name="gallery_empty">No photos yet</string>
+    <string name="faces_scanning">Looking for faces… %1$d of %2$d</string>
+    <string name="faces_empty">No photos with faces found</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Edit</string>
+    <string name="editor_back">Back</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_hint">Tap a photo to edit · Pinch to zoom · Hold and drag to swap</string>
+    <string name="editor_replace">Replace</string>
+    <string name="editor_mirror">Mirror</string>
+    <string name="editor_flip">Flip</string>
+    <string name="editor_border">Border</string>
+    <string name="editor_saving">Saving…</string>
+    <string name="editor_saved_title">Saved to gallery</string>
+    <string name="editor_saved_body_android">Your layout is in Pictures/Collage.</string>
+    <string name="editor_saved_body_ios">Your layout is in your photo library.</string>
+    <string name="editor_share">Share</string>
+    <string name="editor_new_layout">New layout</string>
+    <string name="editor_keep_editing">Keep editing</string>
+    <string name="editor_save_failed">Couldn’t save the layout</string>
+    <string name="editor_share_chooser">Share layout</string>
+    <string name="editor_discard_title">Discard this layout?</string>
+    <string name="editor_discard_body">Your changes will be lost.</string>
+    <string name="editor_discard">Discard</string>
+    <string name="editor_cancel">Cancel</string>
+
+    <!-- Photo booth -->
+    <string name="booth_title">Photo Booth</string>
+    <string name="booth_close">Close</string>
+    <string name="booth_start">Start photo booth</string>
+    <string name="booth_switch_camera">Switch camera</string>
+    <string name="booth_hint">Tap to take %1$d photos in a row</string>
+    <string name="booth_permission_body">Allow camera access to take photos for your layout.</string>
+    <string name="booth_capture_failed">Couldn’t take the photo</string>
+</resources>
