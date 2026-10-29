@@ -5,8 +5,12 @@ Compose Multiplatform for Android and iOS.
 
 | Platform | Status |
 |---|---|
-| Android | Tested manually on an emulator (API 35) and a Pixel 7 (Android 17) |
-| iOS | Compiles; not yet run on a simulator or device |
+| Android | Tested manually on an Android emulator and a Google Pixel phone |
+| iOS | Verified on a physical iPhone: limited/full Photos access, gallery, Faces, selection, editor gestures/tools, picker, 2048×2048 save/share, iCloud loading, photo booth, rotation and foreground return |
+
+Pinch-to-zoom, iCloud-only loading, physical rotation and unmirrored camera checks were exercised by
+the device owner; the remaining checks were driven over iPhone Mirroring. Camera checks included both landscape
+directions, front/rear switching, upright mirrored output and rotation during the countdown.
 
 ## Features
 
@@ -15,9 +19,16 @@ Compose Multiplatform for Android and iOS.
 - Layout previews for the selected count (1–9 photos, 4–7 layouts each), drawn with your photos.
 - Editor: tap to select, drag/pinch to pan and zoom, drag the lines between photos to resize,
   hold and drag to swap; Replace, Mirror, Flip and Border.
+  In landscape, tools sit in a right-side rail aligned with Save to give the collage more room;
+  portrait keeps the bottom toolbar.
 - Saves a 2048×2048 JPEG (Android: `Pictures/Collage`; iOS: the photo library) and opens the share
   sheet. The editor and the export share the same drawing code, so the file matches the screen.
-- Photo booth: 3-2-1 countdown, four shots in a row, straight into a 2×2 layout.
+  After saving, Share, New layout and Keep editing are separate full-width actions with icons.
+- Photo booth: capture four photos individually, one per shutter tap, then open a 2×2 layout.
+  A three-second countdown is on by default for each shot; switch it off for immediate capture.
+  Landscape arranges the live preview, a 2×2 shot grid and a vertical capture-control rail
+  from left to right. Portrait uses a thumbnail row and bottom controls.
+  On iOS, preview and captured photos follow the screen orientation.
 
 ## Project layout
 
@@ -42,11 +53,22 @@ Xcode and Apple Silicon for the simulator.
 
 ### iOS
 
-1. Set your Apple team ID in `iosApp/Configuration/Config.xcconfig` (`TEAM_ID=`).
+1. Copy the signing template, then set `TEAM_ID` in the ignored local file:
+
+   ```shell
+   cp iosApp/Configuration/Signing.xcconfig.example iosApp/Configuration/Signing.xcconfig
+   ```
+
+   `Config.xcconfig` contains shared app settings and optionally includes `Signing.xcconfig`.
+   Leave signing settings blank for simulator builds; a real device needs your Apple development team.
 2. Open `iosApp/iosApp.xcodeproj` and run. Xcode builds the shared framework through Gradle, so
    the JDK must be installed system-wide (or set `JAVA_HOME` in the "Compile Kotlin Framework"
    build phase).
 3. The photo booth needs a real device; the simulator has no camera.
+
+Keep signing certificates/private keys in your local Keychain and provisioning profiles managed by
+Xcode. Local signing settings, exported signing material and signed app archives are ignored by Git;
+do not force-add them. No `skip-worktree` setting is needed.
 
 ## License
 

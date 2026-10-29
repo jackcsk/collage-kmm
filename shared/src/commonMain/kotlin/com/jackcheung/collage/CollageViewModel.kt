@@ -257,7 +257,10 @@ class CollageViewModel(private val repository: MediaRepository) : ViewModel() {
         saveState = SaveState.Saving
         viewModelScope.launch {
             saveState = try {
-                SaveState.Saved(repository.saveCollage(state.layout, state.cells, state.border))
+                val photo = repository.saveCollage(state.layout, state.cells, state.border)
+                // The saving dialog blocks edits, so the saved state is still the current one.
+                if (editor == state) editor = state.copy(edited = false)
+                SaveState.Saved(photo)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

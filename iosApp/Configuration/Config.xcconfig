@@ -1,3 +1,4 @@
 TEAM_ID=
 BUNDLE_ID=com.jackcheung.collage.ios
 APP_NAME=Collage
+#include? "Signing.xcconfig"

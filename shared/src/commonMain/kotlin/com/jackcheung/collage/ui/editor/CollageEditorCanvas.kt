@@ -105,8 +105,9 @@ fun CollageEditorCanvas(
                 CellGesture.Tap -> select(if (currentState.selected == cell) null else cell)
                 CellGesture.Transform -> {
                     select(cell)
+                    // Classification already read the movement that crossed touch slop.
+                    var event = currentEvent
                     do {
-                        val event = awaitPointerEvent()
                         if (event.changes.any { it.isConsumed }) break
                         val zoomChange = event.calculateZoom()
                         val pan = event.calculatePan()
@@ -116,6 +117,7 @@ fun CollageEditorCanvas(
                             transform(cell, pan, zoomChange, centroid - rect.center, rect.size)
                         }
                         event.changes.forEach { if (it.positionChanged()) it.consume() }
+                        event = awaitPointerEvent()
                     } while (event.changes.any { it.pressed })
                 }
                 CellGesture.Swap -> {
