@@ -3,6 +3,34 @@
 A photo collage maker in the spirit of Instagram's discontinued Layout app, written in Kotlin with
 Compose Multiplatform for Android and iOS.
 
+## Preview
+
+Android: pick photos and see layout previews, edit the collage, save it. Below: the exported 2048×2048 file (scaled down).
+
+<p>
+  <img src="docs/preview/home.png" width="240" alt="Home screen: four photos selected with numbered badges and layout previews">
+  <img src="docs/preview/editor.png" width="240" alt="Editor: a four-photo layout with border on and the large photo selected">
+  <img src="docs/preview/saved.png" width="240" alt="Saved to gallery dialog with Share, New layout and Keep editing actions">
+</p>
+<img src="docs/preview/output.jpg" width="360" alt="Exported collage">
+
+Sample photos are from [Unsplash](https://unsplash.com), used under the
+[Unsplash License](https://unsplash.com/license), by
+[Will Haddock](https://unsplash.com/photos/group-of-friends-posing-on-a-sandy-beach-UnldHt2vxYw),
+[sayan Nath](https://unsplash.com/photos/three-friends-laughing-outdoors-under-green-trees-MbOMiTNYejE),
+[Tan Duong](https://unsplash.com/photos/a-woman-smiles-in-soft-warm-light-fBRoULRI3Vw),
+[Jamie Street](https://unsplash.com/photos/dog-sitting-in-front-of-book-Zqy-x7K5Qcg),
+[Ansgar Scheffold](https://unsplash.com/photos/lake-in-the-middle-of-green-mountains-z_f2JrBRbOg),
+[Esra Afşar](https://unsplash.com/photos/a-cup-of-coffee-sitting-on-a-table-next-to-a-window-B0yITxid9u8),
+[Maccy](https://unsplash.com/photos/three-smiling-friends-posing-outdoors-in-a-park-kVIj63yvRJ0),
+[Scott K](https://unsplash.com/photos/pine-forest-reflects-in-a-clear-turquoise-mountain-lake-Sunjg6-30iI),
+[Brooke Balentine](https://unsplash.com/photos/a-smiling-woman-poses-for-a-portrait-cdZcNIca4w0),
+[Glen Carrie](https://unsplash.com/photos/a-white-dog-running-through-a-forest-filled-with-leaves-0Gu177mbpiA),
+[Nick H](https://unsplash.com/photos/moraine-lake-surrounded-by-mountains-T0UJEFWU7EE) and
+[Stephen Kidd](https://unsplash.com/photos/YM9GYuBhxoc).
+
+## Status
+
 | Platform | Status |
 |---|---|
 | Android | Tested manually on an Android emulator and a Google Pixel phone |
