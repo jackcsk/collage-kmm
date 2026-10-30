@@ -98,6 +98,12 @@ fun HomeScreen(viewModel: CollageViewModel) {
 
     val limitMessage = stringResource(Res.string.home_limit_reached, LayoutCatalog.MAX_PHOTOS)
     val showLimit: () -> Unit = { scope.launch { snackbar.showSnackbar(limitMessage) } }
+    LaunchedEffect(viewModel.sharedOverflow) {
+        if (viewModel.sharedOverflow) {
+            viewModel.sharedOverflowShown()
+            showLimit()
+        }
+    }
 
     var requestedPermission by rememberSaveable { mutableStateOf(false) }
     var permissionDenied by rememberSaveable { mutableStateOf(false) }
