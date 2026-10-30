@@ -44,6 +44,10 @@ directions, front/rear switching, upright mirrored output and rotation during th
 
 - Pick up to 9 photos from the gallery, a **Faces** tab (on-device face detection) or the system
   photo picker; works with Android 14+ / iOS limited photo access.
+- Share photos to Collage from other apps (Photos, Files, a browser…): they become the selection
+  and the layout previews appear. Android registers for `SEND`/`SEND_MULTIPLE` of `image/*`; iOS has
+  a share extension (up to 9 photos) that hands the images to the app through an App Group and opens
+  it. More than 9 photos on Android keeps the first 9.
 - Layout previews for the selected count (1–9 photos, 4–7 layouts each), drawn with your photos.
 - Editor: tap to select, drag/pinch to pan and zoom, drag the lines between photos to resize,
   hold and drag to swap; Replace, Mirror, Flip and Border.
@@ -66,7 +70,7 @@ directions, front/rear switching, upright mirrored output and rotation during th
 | `shared/src/androidMain` | MediaStore, `FaceDetector`, photo picker, CameraX |
 | `shared/src/iosMain` | Photos, Vision, PHPicker, AVFoundation, share sheet |
 | `androidApp` | Activity hosting the shared app; application id `com.jackcheung.collage.android` |
-| `iosApp` | Xcode project hosting the shared app; bundle id `com.jackcheung.collage.ios` |
+| `iosApp` | Xcode project hosting the shared app; bundle id `com.jackcheung.collage.ios`. `ShareExtension` target: share-sheet entry (`<bundle id>.share`, App Group `group.<bundle id>`) |
 
 ## Build
 
@@ -89,6 +93,7 @@ Xcode and Apple Silicon for the simulator.
 
    `Config.xcconfig` contains shared app settings and optionally includes `Signing.xcconfig`.
    Leave signing settings blank for simulator builds; a real device needs your Apple development team.
+   Automatic signing registers the share extension's App ID and the App Group for that team.
 2. Open `iosApp/iosApp.xcodeproj` and run. Xcode builds the shared framework through Gradle, so
    the JDK must be installed system-wide (or set `JAVA_HOME` in the "Compile Kotlin Framework"
    build phase).

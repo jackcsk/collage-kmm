@@ -21,6 +21,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSSortDescriptor
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.NSUUID
 import platform.Foundation.writeToFile
 import platform.Photos.PHAccessLevelReadWrite
 import platform.Photos.PHAsset
@@ -130,6 +131,16 @@ internal object IosMediaRepository : MediaRepository {
     override fun isBoothShot(photo: PhotoRef): Boolean = photo.filePath?.startsWith(boothDirectory()) == true
 
     override fun clearBoothShots() = clearDirectory(boothDirectory())
+
+    /**
+     * Moves image files into the picked-photo directory and returns them as photos. A member, so
+     * the directory is cleared (by `init`) before anything is moved into it, not after.
+     */
+    fun adoptFiles(paths: List<String>): List<PhotoRef> = paths.mapNotNull { path ->
+        val extension = path.substringAfterLast('.', "").ifEmpty { "jpg" }
+        val destination = "${pickedDirectory()}/${NSUUID().UUIDString}.$extension"
+        if (NSFileManager.defaultManager.moveItemAtPath(path, destination, error = null)) filePhoto(destination) else null
+    }
 
     /** The image at [photo] and the pixel size to draw it at. */
     private class Loaded(val image: UIImage, val width: Int, val height: Int)

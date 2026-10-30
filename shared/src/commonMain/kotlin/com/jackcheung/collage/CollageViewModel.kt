@@ -149,6 +149,22 @@ class CollageViewModel(private val repository: MediaRepository) : ViewModel() {
 
     fun clearSelection() = updateSelection(emptyList())
 
+    /** Set when photos shared from another app didn't all fit; the home screen reports it once. */
+    var sharedOverflow by mutableStateOf(false)
+        private set
+
+    /** Starts over with photos shared from another app: they become the selection on the home screen. */
+    fun receiveShared(photos: List<PhotoRef>) {
+        if (editor != null) closeEditor() else screen = Screen.Home
+        val fresh = photos.distinct()
+        updateSelection(fresh.take(LayoutCatalog.MAX_PHOTOS))
+        sharedOverflow = fresh.size > LayoutCatalog.MAX_PHOTOS
+    }
+
+    fun sharedOverflowShown() {
+        sharedOverflow = false
+    }
+
     private fun updateSelection(photos: List<PhotoRef>) {
         selection = photos
         val keep = photos.toSet() + editor?.cells?.map { it.photo }.orEmpty()
