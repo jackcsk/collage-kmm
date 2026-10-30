@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jackcheung.collage.platform.SharedPhotoInbox
 import com.jackcheung.collage.platform.rememberMediaRepository
+import com.jackcheung.collage.platform.rememberSharedPhotoInbox
 import com.jackcheung.collage.resources.Res
 import com.jackcheung.collage.resources.editor_cancel
 import com.jackcheung.collage.resources.editor_discard
@@ -23,14 +24,12 @@ import com.jackcheung.collage.ui.home.HomeScreen
 import com.jackcheung.collage.ui.theme.CollageTheme
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * The whole app; hosted by the Android activity and the iOS view controller, which deliver photos
- * shared from other apps into [inbox].
- */
+/** The whole app; hosted by the Android activity and the iOS view controller. */
 @Composable
-fun CollageApp(inbox: SharedPhotoInbox) {
+fun CollageApp() {
     val repository = rememberMediaRepository()
     val viewModel = viewModel { CollageViewModel(repository) }
+    val inbox = rememberSharedPhotoInbox()
     CollageTheme {
         SharedPhotos(inbox, viewModel)
         AnimatedContent(

@@ -12,6 +12,7 @@
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		5D914A84990CD9393F677955 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD3876F3C0C7BEA58B4EDD67 /* Foundation.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
+		A83BD0A4F123B80A4027935E /* ShareInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6370C89302BBD42D202DCBAE /* ShareInbox.swift */; };
 		AF42050452F3F7519FD8825F /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 838BB0783C0DBB8DE4EF9CB7 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ECD39309B7E2A9A20D0444DC /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F622CCFBA681427916D780E /* ShareViewController.swift */; };
 /* End PBXBuildFile section */
@@ -45,6 +46,7 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		5BDE256961BD2341463C7183 /* ShareExtension.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
+		6370C89302BBD42D202DCBAE /* ShareInbox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareInbox.swift; sourceTree = "<group>"; };
 		67E5FEEFEF6CDB4688FB4DAB /* iosApp.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Collage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Collage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 				8F622CCFBA681427916D780E /* ShareViewController.swift */,
 				F0EF4FF8858A3401BB02CCBC /* Info.plist */,
 				5BDE256961BD2341463C7183 /* ShareExtension.entitlements */,
+				6370C89302BBD42D202DCBAE /* ShareInbox.swift */,
 			);
 			name = ShareExtension;
 			path = ShareExtension;
@@ -281,6 +284,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECD39309B7E2A9A20D0444DC /* ShareViewController.swift in Sources */,
+				A83BD0A4F123B80A4027935E /* ShareInbox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
