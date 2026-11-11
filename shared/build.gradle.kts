@@ -62,6 +62,11 @@ compose.resources {
     packageOfResClass = "com.jackcheung.collage.resources"
 }
 
+composeCompiler {
+    // UI state passes read-only lists (for example List<BarItem>); treat them as stable so equal lists skip.
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+}
+
 dependencies {
     "androidRuntimeClasspath"(libs.compose.ui.tooling)
 }
