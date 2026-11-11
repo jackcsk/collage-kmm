@@ -80,6 +80,9 @@ class BarItem(
 val RailWidth = 80.dp
 private val PrimaryActionEndPadding = 8.dp
 
+/** Height of an extended floating action button (56dp) plus its 16dp margin. */
+private val FabClearance = 72.dp
+
 /**
  * A screen with bars that follow [WindowLayout.barEdge]. In tall windows the bars are horizontal:
  * a top app bar ([navigation], [actions], [primaryAction]), a bottom toolbar ([tools]) and a
@@ -189,7 +192,9 @@ fun AdaptiveScaffold(
                             modifier = Modifier.align(Alignment.BottomEnd).padding(contentPadding).padding(16.dp),
                         )
                     }
-                    Box(Modifier.align(Alignment.BottomCenter).padding(contentPadding)) { snackbarHost() }
+                    // As Material's Scaffold does, keep snackbars above the floating button rather than over it.
+                    val fabClearance = if (edge == null && floatingAction != null) FabClearance else 0.dp
+                    Box(Modifier.align(Alignment.BottomCenter).padding(contentPadding).padding(bottom = fabClearance)) { snackbarHost() }
                 }
             },
         )

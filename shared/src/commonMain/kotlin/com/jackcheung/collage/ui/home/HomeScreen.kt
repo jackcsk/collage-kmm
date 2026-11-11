@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -46,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,7 +86,6 @@ import org.jetbrains.compose.resources.stringResource
 private const val TAB_GALLERY = 0
 private const val TAB_FACES = 1
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: CollageViewModel) {
     val access by viewModel.mediaAccess.collectAsStateWithLifecycle()
@@ -210,7 +209,8 @@ private fun LayoutStrip(
 ) {
     val wide = LocalWindowLayout.current.wide
     // The strip and the grid are different lists; carry the first visible layout between them.
-    var firstVisible by rememberSaveable { mutableIntStateOf(0) }
+    // A new selection after Clear starts again from the first layout.
+    var firstVisible by rememberSaveable(selection.isEmpty()) { mutableIntStateOf(0) }
     val size = if (wide) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(164.dp)
     Box(size, contentAlignment = Alignment.Center) {
         if (selection.isEmpty()) {
@@ -250,8 +250,10 @@ private fun LayoutStrip(
                 )
                 TextButton(onClick = onClear) { Text(stringResource(Res.string.home_clear)) }
             }
+            // Only the starting index: reading it observed would recompose the strip on every scroll step.
+            val start = Snapshot.withoutReadObservation { firstVisible }
             if (wide) {
-                val state = rememberLazyGridState(firstVisible)
+                val state = rememberLazyGridState(start)
                 LaunchedEffect(state) { snapshotFlow { state.firstVisibleItemIndex }.collect { firstVisible = it } }
                 LazyVerticalGrid(
                     state = state,
@@ -265,7 +267,7 @@ private fun LayoutStrip(
                     }
                 }
             } else {
-                val state = rememberLazyListState(firstVisible)
+                val state = rememberLazyListState(start)
                 LaunchedEffect(state) { snapshotFlow { state.firstVisibleItemIndex }.collect { firstVisible = it } }
                 LazyRow(
                     state = state,
