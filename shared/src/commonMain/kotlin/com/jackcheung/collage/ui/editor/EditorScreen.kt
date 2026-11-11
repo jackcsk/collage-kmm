@@ -61,7 +61,8 @@ fun EditorScreen(viewModel: CollageViewModel) {
     val state = viewModel.editor ?: return
     val snackbar = remember { SnackbarHostState() }
     var confirmDiscard by rememberSaveable { mutableStateOf(false) }
-    val leave = { if (state.edited) confirmDiscard = true else viewModel.closeEditor() }
+    // Reads the editor when called, not when composed, so this lambda stays the same across gesture frames.
+    val leave = { if (viewModel.editor?.edited == true) confirmDiscard = true else viewModel.closeEditor() }
     PlatformBackHandler(onBack = leave)
 
     val pickReplacement = rememberPhotoPicker(maxItems = 1) { photos ->

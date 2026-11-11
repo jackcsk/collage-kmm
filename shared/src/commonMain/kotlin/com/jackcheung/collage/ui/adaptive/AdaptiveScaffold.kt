@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,13 +14,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -48,14 +44,13 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -64,9 +59,12 @@ import androidx.compose.ui.unit.dp
  * One control in the app's bars. Each has an icon and a title so it works in every form: an icon
  * on the side rail (the title becomes its accessibility label), an action in the top bar, or a
  * labelled tool.
+ *
+ * Screens rebuild their items on every recomposition (the editor does so on every gesture frame),
+ * so this is an `@Immutable data class`: equal items let the bar composables skip.
  */
-@Stable
-class BarItem(
+@Immutable
+data class BarItem(
     val icon: Painter,
     val label: String,
     val onClick: () -> Unit,
@@ -113,21 +111,15 @@ fun AdaptiveScaffold(
     // iPhone Duo: the rail goes in the system's strip, beside the content's safe area rather than taking from it.
     val systemBar = windowLayout.systemBar
     val safe = WindowInsets.safeDrawing
-    val direction = LocalLayoutDirection.current
-    val safePadding = safe.asPaddingValues()
+    // Lazy padding: the insets are read at layout, so inset changes don't recompose the scaffold.
     val contentPadding = when {
-        edge == null -> PaddingValues(
-            start = safePadding.calculateStartPadding(direction),
-            end = safePadding.calculateEndPadding(direction),
-            bottom = if (tools.isEmpty()) safePadding.calculateBottomPadding() else 0.dp,
-        )
-        systemBar != null -> safePadding
-        else -> PaddingValues(
-            start = if (edge == BarEdge.Start) 0.dp else safePadding.calculateStartPadding(direction),
-            end = if (edge == BarEdge.End) 0.dp else safePadding.calculateEndPadding(direction),
-            top = safePadding.calculateTopPadding(),
-            bottom = safePadding.calculateBottomPadding(),
-        )
+        edge == null -> safe.only(
+            if (tools.isEmpty()) WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom else WindowInsetsSides.Horizontal,
+        ).asPaddingValues()
+        systemBar != null -> safe.asPaddingValues()
+        else -> safe.only(
+            WindowInsetsSides.Vertical + if (edge == BarEdge.Start) WindowInsetsSides.End else WindowInsetsSides.Start,
+        ).asPaddingValues()
     }
 
     // Like Material's Scaffold: paint the theme background and set its content colour, so nothing
@@ -283,23 +275,22 @@ private fun SideRail(
         val side = if (edge == BarEdge.End) WindowInsetsSides.End else WindowInsetsSides.Start
         Modifier.fillMaxHeight().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + side)).width(RailWidth)
     }
-    BoxWithConstraints(placement) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            // Scrolls only if a very short window can't fit every control.
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = maxHeight).padding(vertical = 4.dp),
-        ) {
-            // Top, as on iPhone Duo: what the top bar holds, with navigation first.
-            navigation?.let { RailGroup(listOf(it)) }
-            primaryAction?.let { ProminentRailButton(it) }
-            if (actions.isNotEmpty()) RailGroup(actions)
-            Spacer(Modifier.weight(1f))
-            // Bottom: what the bottom bars hold, each set grouped, with the floating action last.
-            if (tools.isNotEmpty()) RailGroup(tools)
-            if (tabs.isNotEmpty()) RailGroup(tabs, highlightSelected = true)
-            floatingAction?.let { ProminentRailButton(it) }
-        }
+    // verticalScroll keeps the minimum height, so the weighted spacer still splits top and bottom.
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        // Scrolls only if a very short window can't fit every control.
+        modifier = placement.verticalScroll(rememberScrollState()).padding(vertical = 4.dp),
+    ) {
+        // Top, as on iPhone Duo: what the top bar holds, with navigation first.
+        navigation?.let { RailGroup(listOf(it)) }
+        primaryAction?.let { ProminentRailButton(it) }
+        if (actions.isNotEmpty()) RailGroup(actions)
+        Spacer(Modifier.weight(1f))
+        // Bottom: what the bottom bars hold, each set grouped, with the floating action last.
+        if (tools.isNotEmpty()) RailGroup(tools)
+        if (tabs.isNotEmpty()) RailGroup(tabs, highlightSelected = true)
+        floatingAction?.let { ProminentRailButton(it) }
     }
 }
 
