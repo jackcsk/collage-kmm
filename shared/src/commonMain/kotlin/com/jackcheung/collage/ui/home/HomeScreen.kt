@@ -20,25 +20,20 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.itemsIndexed as gridItemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,6 +73,11 @@ import com.jackcheung.collage.platform.rememberPhotoPicker
 import com.jackcheung.collage.resources.*
 import com.jackcheung.collage.ui.PhotoThumbnail
 import com.jackcheung.collage.ui.ThumbnailCache
+import com.jackcheung.collage.ui.adaptive.AdaptivePanes
+import com.jackcheung.collage.ui.adaptive.AdaptiveScaffold
+import com.jackcheung.collage.ui.adaptive.AdaptiveTabRow
+import com.jackcheung.collage.ui.adaptive.BarItem
+import com.jackcheung.collage.ui.adaptive.LocalWindowLayout
 import com.jackcheung.collage.ui.drawCollage
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -124,77 +125,82 @@ fun HomeScreen(viewModel: CollageViewModel) {
         if (!viewModel.addToSelection(photos)) showLimit()
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(Res.string.app_name)) },
-                actions = {
-                    IconButton(onClick = openPicker) {
-                        Icon(painterResource(Res.drawable.ic_photo_library), contentDescription = stringResource(Res.string.home_browse))
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = viewModel::openPhotoBooth,
-                icon = { Icon(painterResource(Res.drawable.ic_photo_camera), contentDescription = null) },
-                text = { Text(stringResource(Res.string.home_photo_booth)) },
-            )
-        },
+    val tabs = listOf(
+        BarItem(
+            icon = painterResource(Res.drawable.ic_grid_view),
+            label = stringResource(Res.string.home_tab_gallery),
+            onClick = { tab = TAB_GALLERY },
+            selected = tab == TAB_GALLERY,
+        ),
+        BarItem(
+            icon = painterResource(Res.drawable.ic_face),
+            label = stringResource(Res.string.home_tab_faces),
+            onClick = { tab = TAB_FACES },
+            selected = tab == TAB_FACES,
+        ),
+    )
+    AdaptiveScaffold(
+        title = stringResource(Res.string.app_name),
+        centerTitle = true,
+        floatingAction = BarItem(
+            icon = painterResource(Res.drawable.ic_photo_camera),
+            label = stringResource(Res.string.home_photo_booth),
+            onClick = viewModel::openPhotoBooth,
+        ),
+        actions = listOf(
+            BarItem(painterResource(Res.drawable.ic_photo_library), stringResource(Res.string.home_browse), openPicker),
+        ),
+        tabs = tabs,
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            LayoutStrip(
-                selection = selection,
-                image = viewModel::image,
-                onPick = viewModel::openEditor,
-                onClear = viewModel::clearSelection,
-            )
-            HorizontalDivider()
-            PrimaryTabRow(selectedTabIndex = tab) {
-                Tab(
-                    selected = tab == TAB_GALLERY,
-                    onClick = { tab = TAB_GALLERY },
-                    text = { Text(stringResource(Res.string.home_tab_gallery)) },
+        AdaptivePanes(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            primary = {
+                LayoutStrip(
+                    selection = selection,
+                    image = viewModel::image,
+                    onPick = viewModel::openEditor,
+                    onClear = viewModel::clearSelection,
                 )
-                Tab(
-                    selected = tab == TAB_FACES,
-                    onClick = { tab = TAB_FACES },
-                    text = { Text(stringResource(Res.string.home_tab_faces)) },
-                )
-            }
-            if (tab == TAB_FACES && access != MediaAccess.None) {
-                LaunchedEffect(Unit) { viewModel.startFaceScan() }
-            }
-            when (access) {
-                MediaAccess.None -> PermissionPrompt(
-                    denied = permissionDenied,
-                    onAllow = accessRequester::request,
-                    onOpenSettings = openSettings,
-                    onBrowse = openPicker,
-                )
-                MediaAccess.Partial, MediaAccess.Full -> Column {
-                    if (access == MediaAccess.Partial) {
-                        PartialAccessBanner(onManage = accessRequester::manageSelection)
+            },
+            secondary = {
+                Column {
+                    // A tab row above the grid; on iPhone Duo's vertical bar the tabs sit there instead.
+                    AdaptiveTabRow(tabs)
+                    if (tab == TAB_FACES && access != MediaAccess.None) {
+                        LaunchedEffect(Unit) { viewModel.startFaceScan() }
                     }
-                    val toggle: (PhotoRef) -> Unit = { if (!viewModel.toggleSelection(it)) showLimit() }
-                    when (tab) {
-                        TAB_GALLERY -> PhotoGrid(
-                            images = gallery,
-                            thumbnails = viewModel.gridThumbnails,
-                            selection = selection,
-                            emptyText = stringResource(Res.string.gallery_empty),
-                            onToggle = toggle,
+                    when (access) {
+                        MediaAccess.None -> PermissionPrompt(
+                            denied = permissionDenied,
+                            onAllow = accessRequester::request,
+                            onOpenSettings = openSettings,
+                            onBrowse = openPicker,
                         )
-                        else -> FacesTab(faceScan = faceScan, thumbnails = viewModel.gridThumbnails, selection = selection, onToggle = toggle)
+                        MediaAccess.Partial, MediaAccess.Full -> Column {
+                            if (access == MediaAccess.Partial) {
+                                PartialAccessBanner(onManage = accessRequester::manageSelection)
+                            }
+                            val toggle: (PhotoRef) -> Unit = { if (!viewModel.toggleSelection(it)) showLimit() }
+                            when (tab) {
+                                TAB_GALLERY -> PhotoGrid(
+                                    images = gallery,
+                                    thumbnails = viewModel.gridThumbnails,
+                                    selection = selection,
+                                    emptyText = stringResource(Res.string.gallery_empty),
+                                    onToggle = toggle,
+                                )
+                                else -> FacesTab(faceScan = faceScan, thumbnails = viewModel.gridThumbnails, selection = selection, onToggle = toggle)
+                            }
+                        }
                     }
                 }
-            }
-        }
+            },
+        )
     }
 }
 
+/** Layouts for the selected photos: a strip across the top, or a grid filling the leading pane when wide. */
 @Composable
 private fun LayoutStrip(
     selection: List<PhotoRef>,
@@ -202,7 +208,11 @@ private fun LayoutStrip(
     onPick: (LayoutTemplate) -> Unit,
     onClear: () -> Unit,
 ) {
-    Box(Modifier.fillMaxWidth().height(164.dp), contentAlignment = Alignment.Center) {
+    val wide = LocalWindowLayout.current.wide
+    // The strip and the grid are different lists; carry the first visible layout between them.
+    var firstVisible by rememberSaveable { mutableIntStateOf(0) }
+    val size = if (wide) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(164.dp)
+    Box(size, contentAlignment = Alignment.Center) {
         if (selection.isEmpty()) {
             Text(
                 text = stringResource(Res.string.home_hint, LayoutCatalog.MAX_PHOTOS),
@@ -215,6 +225,18 @@ private fun LayoutStrip(
         }
         val cells = remember(selection) { selection.map { CollageCell(it) } }
         val templates = LayoutCatalog.templatesFor(selection.size)
+        val preview: @Composable (Int, LayoutTemplate, Modifier) -> Unit = { index, template, modifier ->
+            val description = stringResource(Res.string.home_layout_option, index + 1)
+            LayoutPreview(
+                template = template,
+                cells = cells,
+                image = image,
+                modifier = modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { onPick(template) }
+                    .semantics { contentDescription = description },
+            )
+        }
         Column(Modifier.fillMaxSize()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -228,22 +250,31 @@ private fun LayoutStrip(
                 )
                 TextButton(onClick = onClear) { Text(stringResource(Res.string.home_clear)) }
             }
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                itemsIndexed(templates, key = { _, template -> template.id }) { index, template ->
-                    val description = stringResource(Res.string.home_layout_option, index + 1)
-                    LayoutPreview(
-                        template = template,
-                        cells = cells,
-                        image = image,
-                        modifier = Modifier
-                            .size(104.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .clickable { onPick(template) }
-                            .semantics { contentDescription = description },
-                    )
+            if (wide) {
+                val state = rememberLazyGridState(firstVisible)
+                LaunchedEffect(state) { snapshotFlow { state.firstVisibleItemIndex }.collect { firstVisible = it } }
+                LazyVerticalGrid(
+                    state = state,
+                    columns = GridCells.Adaptive(minSize = 104.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    gridItemsIndexed(templates, key = { _, template -> template.id }) { index, template ->
+                        preview(index, template, Modifier.animateItem().aspectRatio(1f))
+                    }
+                }
+            } else {
+                val state = rememberLazyListState(firstVisible)
+                LaunchedEffect(state) { snapshotFlow { state.firstVisibleItemIndex }.collect { firstVisible = it } }
+                LazyRow(
+                    state = state,
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    itemsIndexed(templates, key = { _, template -> template.id }) { index, template ->
+                        preview(index, template, Modifier.size(104.dp))
+                    }
                 }
             }
         }
@@ -286,9 +317,11 @@ private fun PhotoGrid(
             }
             return@Column
         }
+        // Leave room under the floating Photo Booth button; on the side rail it is out of the way.
+        val fabClearance = if (LocalWindowLayout.current.barEdge == null) 96.dp else 0.dp
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 96.dp),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            contentPadding = PaddingValues(bottom = fabClearance),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
             modifier = Modifier.fillMaxSize(),
@@ -299,6 +332,8 @@ private fun PhotoGrid(
                     thumbnails = thumbnails,
                     order = selection.indexOf(photo),
                     onClick = { onToggle(photo) },
+                    // Tiles glide to their new cells when folding or unfolding changes the column count.
+                    modifier = Modifier.animateItem(),
                 )
             }
         }
@@ -306,11 +341,11 @@ private fun PhotoGrid(
 }
 
 @Composable
-private fun GalleryTile(photo: PhotoRef, thumbnails: ThumbnailCache, order: Int, onClick: () -> Unit) {
+private fun GalleryTile(photo: PhotoRef, thumbnails: ThumbnailCache, order: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val selected = order >= 0
     val badgeDescription = if (selected) stringResource(Res.string.home_selection_badge, order + 1) else null
     Box(
-        Modifier
+        modifier
             .aspectRatio(1f)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onClick)

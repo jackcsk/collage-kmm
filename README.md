@@ -14,6 +14,18 @@ Android: pick photos and see layout previews, edit the collage, save it. Below: 
 </p>
 <img src="docs/preview/output.jpg" width="360" alt="Exported collage">
 
+Foldables and landscape: an Android 7.6" foldable unfolded in landscape, and iPhone Duo closed and
+opened. Panes sit side by side when the window is wider than tall, and the bars move to a rail on
+the side. The iPhone Duo gallery also shows the simulator's own sample photos.
+
+<p>
+  <img src="docs/preview/android-foldable.png" width="480" alt="Android foldable in landscape: layout previews on the left, Gallery/Faces picker on the right, Browse and Photo Booth on a side rail">
+</p>
+<p>
+  <img src="docs/preview/iphone-duo-closed.png" width="240" alt="iPhone Duo closed: Browse at the top of the vertical bar strip, Gallery/Faces grouped above Photo Booth at the bottom">
+  <img src="docs/preview/iphone-duo-open.png" width="480" alt="iPhone Duo opened: layout previews and picker side by side with the vertical bar on the right">
+</p>
+
 Sample photos are from [Unsplash](https://unsplash.com), used under the
 [Unsplash License](https://unsplash.com/license), by
 [Will Haddock](https://unsplash.com/photos/group-of-friends-posing-on-a-sandy-beach-UnldHt2vxYw),
@@ -33,8 +45,9 @@ Sample photos are from [Unsplash](https://unsplash.com), used under the
 
 | Platform | Status |
 |---|---|
-| Android | Tested manually on an Android emulator and a Google Pixel phone |
+| Android | Tested manually on an Android emulator and a Google Pixel phone; adaptive layouts on a 7.6" foldable emulator (fold/unfold, rotation, phone-sized landscape, display cutout) |
 | iOS | Verified on a physical iPhone: limited/full Photos access, gallery, Faces, selection, editor gestures/tools, picker, 2048×2048 save/share, iCloud loading, photo booth, rotation and foreground return |
+| iPhone Duo | Checked on the iPhone Duo simulator (iOS 27.2): closed, opened and rotated; side rail in the system bar strip |
 
 Pinch-to-zoom, iCloud-only loading, physical rotation and unmirrored camera checks were exercised by
 the device owner; the remaining checks were driven over iPhone Mirroring. Camera checks included both landscape
@@ -51,16 +64,30 @@ directions, front/rear switching, upright mirrored output and rotation during th
 - Layout previews for the selected count (1–9 photos, 4–7 layouts each), drawn with your photos.
 - Editor: tap to select, drag/pinch to pan and zoom, drag the lines between photos to resize,
   hold and drag to swap; Replace, Mirror, Flip and Border.
-  In landscape, tools sit in a right-side rail aligned with Save to give the collage more room;
-  portrait keeps the bottom toolbar.
 - Saves a 2048×2048 JPEG (Android: `Pictures/Collage`; iOS: the photo library) and opens the share
   sheet. The editor and the export share the same drawing code, so the file matches the screen.
   After saving, Share, New layout and Keep editing are separate full-width actions with icons.
 - Photo booth: capture four photos individually, one per shutter tap, then open a 2×2 layout.
   A three-second countdown is on by default for each shot; switch it off for immediate capture.
   Landscape arranges the live preview, a 2×2 shot grid and a vertical capture-control rail
-  from left to right. Portrait uses a thumbnail row and bottom controls.
-  On iOS, preview and captured photos follow the screen orientation.
+  from left to right, with Close at the top of the rail. Portrait uses a thumbnail row and bottom
+  controls. Preview and captured photos follow the screen orientation, also when the phone is
+  rotated or folded while the booth is open.
+- Adapts to foldables (Android foldables, iPhone Duo), landscape phones and resizing, from one
+  place in `ui/adaptive`:
+  - Wider-than-tall windows put the panes side by side: on Home, the selected layouts on the
+    leading side and the Gallery/Faces picker on the trailing side. Taller windows stack them.
+  - When vertical space is short (wide windows, or wherever iOS asks for vertical bars, such as the
+    iPhone Duo outer display), the bars move to one rail on the side, laid out as on iPhone Duo:
+    Back and the other top-bar actions (Save, Browse) at the top; the editing tools grouped at the
+    bottom, with Photo Booth last. On iPhone Duo the rail sits in the system's bar strip under the
+    vertical status bar, and the Gallery/Faces tabs join it as a group above Photo Booth;
+    elsewhere they stay as tabs above the picker.
+  - Folding, unfolding and rotating animate the panes, bars and photo grid to their new places
+    instead of jumping. On Android the activity handles these changes itself so state survives.
+  - Content stays inside the platform safe areas (status and navigation bars, display cutouts, and
+    the iPhone Duo camera and vertical status bar). On iPhone Duo the rail uses the system's bar
+    strip beside the vertical status bar, as the system's own bars do.
 
 ## Project layout
 

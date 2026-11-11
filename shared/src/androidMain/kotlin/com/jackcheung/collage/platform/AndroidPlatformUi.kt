@@ -30,6 +30,7 @@ import androidx.core.view.WindowCompat
 import com.jackcheung.collage.resources.Res
 import com.jackcheung.collage.resources.editor_saved_body_android
 import com.jackcheung.collage.resources.editor_share_chooser
+import com.jackcheung.collage.ui.adaptive.SystemVerticalBar
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -122,6 +123,10 @@ actual fun LightSystemBarIcons() {
         }
     }
 }
+
+/** Android has no system vertical bar; the window shape decides. */
+@Composable
+actual fun systemVerticalBar(): SystemVerticalBar? = null
 
 actual val savedCollageMessage: StringResource = Res.string.editor_saved_body_android
 

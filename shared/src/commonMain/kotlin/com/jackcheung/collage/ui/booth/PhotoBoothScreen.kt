@@ -16,8 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -69,6 +69,9 @@ import com.jackcheung.collage.platform.rememberCameraPermission
 import com.jackcheung.collage.resources.*
 import com.jackcheung.collage.ui.PhotoThumbnail
 import com.jackcheung.collage.ui.ThumbnailCache
+import com.jackcheung.collage.ui.adaptive.LocalWindowLayout
+import com.jackcheung.collage.ui.adaptive.RailWidth
+import com.jackcheung.collage.ui.adaptive.animateWindowBounds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -77,6 +80,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val BOOTH_SHOTS = 4
 private const val COUNTDOWN_SECONDS = 3
+private val SidePadding = 16.dp
 
 /** Collects [BOOTH_SHOTS] photos, one per shutter press, then hands them to [onFinished]. */
 @Composable
@@ -89,35 +93,57 @@ fun PhotoBoothScreen(thumbnails: ThumbnailCache, onClose: () -> Unit, onFinished
     PlatformBackHandler(onBack = onClose)
     LightSystemBarIcons()
 
+    val wide = LocalWindowLayout.current.wide
     Surface(color = Color.Black, contentColor = Color.White, modifier = Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().systemBarsPadding()) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(4.dp)) {
-                IconButton(onClick = onClose) {
-                    Icon(painterResource(Res.drawable.ic_close), contentDescription = stringResource(Res.string.booth_close))
-                }
-                Text(stringResource(Res.string.booth_title), style = MaterialTheme.typography.titleLarge)
-            }
-            if (permission.granted) {
-                BoothCameraContent(camera = rememberBoothCamera(), thumbnails = thumbnails, onFinished = onFinished)
-            } else {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize().padding(32.dp),
-                ) {
-                    Text(stringResource(Res.string.booth_permission_body), textAlign = TextAlign.Center)
-                    if (permission.denied) {
-                        Spacer(Modifier.height(24.dp))
-                        Button(onClick = openSettings) { Text(stringResource(Res.string.permission_settings)) }
+        Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+            Column(Modifier.fillMaxSize()) {
+                // Wide windows keep the full height for the camera; Close moves to the top of the control rail.
+                if (!wide) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                        CloseButton(onClose)
+                        Text(stringResource(Res.string.booth_title), style = MaterialTheme.typography.titleLarge)
                     }
                 }
+                if (permission.granted) {
+                    BoothCameraContent(camera = rememberBoothCamera(), thumbnails = thumbnails, onClose = onClose, onFinished = onFinished)
+                } else {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxSize().padding(32.dp),
+                    ) {
+                        Text(stringResource(Res.string.booth_permission_body), textAlign = TextAlign.Center)
+                        if (permission.denied) {
+                            Spacer(Modifier.height(24.dp))
+                            Button(onClick = openSettings) { Text(stringResource(Res.string.permission_settings)) }
+                        }
+                    }
+                }
+            }
+            if (wide && !permission.granted) {
+                Box(
+                    contentAlignment = Alignment.TopCenter,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(end = SidePadding).width(RailWidth),
+                ) { CloseButton(onClose) }
             }
         }
     }
 }
 
 @Composable
-private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, onFinished: (List<PhotoRef>) -> Unit) {
+private fun CloseButton(onClose: () -> Unit) {
+    IconButton(onClick = onClose) {
+        Icon(painterResource(Res.drawable.ic_close), contentDescription = stringResource(Res.string.booth_close))
+    }
+}
+
+@Composable
+private fun BoothCameraContent(
+    camera: BoothCamera,
+    thumbnails: ThumbnailCache,
+    onClose: () -> Unit,
+    onFinished: (List<PhotoRef>) -> Unit,
+) {
     var countdown by remember { mutableStateOf<Int?>(null) }
     var countdownEnabled by rememberSaveable { mutableStateOf(true) }
     var shots by remember { mutableStateOf<List<PhotoRef>>(emptyList()) }
@@ -161,19 +187,18 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val landscape = maxWidth > maxHeight
-        val sidePadding = if (landscape) 16.dp else 0.dp
+        val wide = LocalWindowLayout.current.wide
+        val sidePadding = if (wide) SidePadding else 0.dp
         val shotSpacing = 8.dp
         val shotGaps = shotSpacing * (BOOTH_SHOTS - 1)
-        val railWidth = 80.dp
         val panelGap = 16.dp
-        val controlsMinWidth = 96.dp * 2 + shotSpacing + panelGap + railWidth
-        val previewSize = if (landscape) {
+        val controlsMinWidth = 96.dp * 2 + shotSpacing + panelGap + RailWidth
+        val previewSize = if (wide) {
             minOf(maxHeight, (maxWidth - sidePadding * 2 - 24.dp - controlsMinWidth).coerceAtLeast(0.dp))
         } else {
             maxWidth
         }
-        val controlsWidth = if (landscape) maxWidth - sidePadding * 2 - previewSize - 24.dp else maxWidth
+        val controlsWidth = if (wide) maxWidth - sidePadding * 2 - previewSize - 24.dp else maxWidth
         val thumbnailSize = minOf(96.dp, (controlsWidth - shotGaps).coerceAtLeast(0.dp) / BOOTH_SHOTS)
 
         Layout(
@@ -181,7 +206,7 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
             content = {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.clipToBounds().background(Color.DarkGray),
+                    modifier = Modifier.animateWindowBounds().clipToBounds().background(Color.DarkGray),
                 ) {
                     camera.Preview(Modifier.fillMaxSize())
                     countdown?.let { n ->
@@ -198,7 +223,7 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
                     Box(Modifier.fillMaxSize().graphicsLayer { alpha = flash.value }.background(Color.White))
                 }
 
-                if (landscape) {
+                if (wide) {
                     Column(verticalArrangement = Arrangement.spacedBy(shotSpacing)) {
                         repeat(2) { row ->
                             Row(
@@ -275,15 +300,19 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
                         )
                     }
                 }
-                if (landscape) {
+                if (wide) {
+                    // Full height: Close at the top, as on the side bars elsewhere, capture controls centred.
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(panelGap),
-                        modifier = Modifier.width(railWidth).verticalScroll(rememberScrollState()),
+                        modifier = Modifier.width(RailWidth).verticalScroll(rememberScrollState()),
                     ) {
+                        CloseButton(onClose)
+                        Spacer(Modifier.weight(1f))
                         countdownControl()
                         shutter()
                         if (camera.canSwitch) switchCamera()
+                        Spacer(Modifier.weight(1f))
                     }
                 } else {
                     Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
@@ -299,19 +328,23 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
             val width = constraints.maxWidth
             val height = constraints.maxHeight
             val loose = constraints.copy(minWidth = 0, minHeight = 0)
-            val controlsWidthPx = if (landscape) railWidth.roundToPx() else width
-            val controls = measurables[3].measure(loose.copy(minWidth = controlsWidthPx, maxWidth = controlsWidthPx))
+            val controls = if (wide) {
+                val railWidth = RailWidth.roundToPx()
+                measurables[3].measure(Constraints(minWidth = railWidth, maxWidth = railWidth, minHeight = height, maxHeight = height))
+            } else {
+                measurables[3].measure(loose.copy(minWidth = width, maxWidth = width))
+            }
             val panelWidth = controlsWidth.roundToPx()
-            val gridWidth = if (landscape) (panelWidth - controls.width - panelGap.roundToPx()).coerceAtLeast(0) else width
+            val gridWidth = if (wide) (panelWidth - controls.width - panelGap.roundToPx()).coerceAtLeast(0) else width
             val hint = measurables[2].measure(loose.copy(minWidth = gridWidth, maxWidth = gridWidth))
             val gridHintGap = minOf(panelGap.roundToPx(), (height - hint.height).coerceAtLeast(0))
-            val shotSlots = if (landscape) {
+            val shotSlots = if (wide) {
                 val side = minOf(gridWidth, (height - hint.height - gridHintGap).coerceAtLeast(0))
                 measurables[1].measure(Constraints.fixed(side, side))
             } else {
                 measurables[1].measure(loose.copy(minWidth = width, maxWidth = width))
             }
-            val previewSide = if (landscape) {
+            val previewSide = if (wide) {
                 previewSize.roundToPx()
             } else {
                 minOf(width, (height - shotSlots.height - hint.height - controls.height).coerceAtLeast(0))
@@ -319,18 +352,15 @@ private fun BoothCameraContent(camera: BoothCamera, thumbnails: ThumbnailCache, 
             val preview = measurables[0].measure(Constraints.fixed(previewSide, previewSide))
             layout(width, height) {
                 preview.placeRelative(
-                    x = if (landscape) sidePadding.roundToPx() else (width - previewSide) / 2,
-                    y = if (landscape) (height - previewSide) / 2 else 0,
+                    x = if (wide) sidePadding.roundToPx() else (width - previewSide) / 2,
+                    y = if (wide) (height - previewSide) / 2 else 0,
                 )
-                if (landscape) {
+                if (wide) {
                     val gridX = width - sidePadding.roundToPx() - panelWidth
                     val gridY = (height - shotSlots.height - gridHintGap - hint.height) / 2
                     shotSlots.placeRelative(gridX + (gridWidth - shotSlots.width) / 2, gridY)
                     hint.placeRelative(gridX, gridY + shotSlots.height + gridHintGap)
-                    controls.placeRelative(
-                        x = width - sidePadding.roundToPx() - controls.width,
-                        y = (height - controls.height) / 2,
-                    )
+                    controls.placeRelative(x = width - sidePadding.roundToPx() - controls.width, y = 0)
                 } else {
                     val controlsY = height - controls.height
                     val hintY = controlsY - hint.height

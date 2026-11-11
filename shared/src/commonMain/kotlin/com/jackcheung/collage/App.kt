@@ -18,6 +18,7 @@ import com.jackcheung.collage.resources.editor_cancel
 import com.jackcheung.collage.resources.editor_discard
 import com.jackcheung.collage.resources.editor_discard_body
 import com.jackcheung.collage.resources.editor_discard_title
+import com.jackcheung.collage.ui.adaptive.AdaptiveRoot
 import com.jackcheung.collage.ui.booth.PhotoBoothScreen
 import com.jackcheung.collage.ui.editor.EditorScreen
 import com.jackcheung.collage.ui.home.HomeScreen
@@ -32,19 +33,21 @@ fun CollageApp() {
     val inbox = rememberSharedPhotoInbox()
     CollageTheme {
         SharedPhotos(inbox, viewModel)
-        AnimatedContent(
-            targetState = viewModel.screen,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "screen",
-        ) { screen ->
-            when (screen) {
-                Screen.Home -> HomeScreen(viewModel)
-                Screen.Editor -> EditorScreen(viewModel)
-                Screen.PhotoBooth -> PhotoBoothScreen(
-                    thumbnails = viewModel.gridThumbnails,
-                    onClose = viewModel::closePhotoBooth,
-                    onFinished = viewModel::onBoothFinished,
-                )
+        AdaptiveRoot {
+            AnimatedContent(
+                targetState = viewModel.screen,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "screen",
+            ) { screen ->
+                when (screen) {
+                    Screen.Home -> HomeScreen(viewModel)
+                    Screen.Editor -> EditorScreen(viewModel)
+                    Screen.PhotoBooth -> PhotoBoothScreen(
+                        thumbnails = viewModel.gridThumbnails,
+                        onClose = viewModel::closePhotoBooth,
+                        onFinished = viewModel::onBoothFinished,
+                    )
+                }
             }
         }
     }
