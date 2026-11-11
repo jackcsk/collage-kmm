@@ -127,10 +127,13 @@ fun AdaptiveScaffold(
         )
     }
 
-    Layout(
-        modifier = modifier.fillMaxSize(),
-        contents = listOf(
-            {
+    // Like Material's Scaffold: paint the theme background and set its content colour, so nothing
+    // shows the window's own background (light, even in dark theme) through gaps in the content.
+    Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        ScaffoldLayout(
+            edge = edge,
+            systemBar = systemBar,
+            topBar = {
                 if (edge == null) {
                     val barTitle: @Composable () -> Unit = { Text(title) }
                     val navigationIcon: @Composable () -> Unit = { navigation?.let { BarIconButton(it) } }
@@ -154,7 +157,7 @@ fun AdaptiveScaffold(
                     }
                 }
             },
-            {
+            rail = {
                 if (edge != null) {
                     FadeInOnEnter(Modifier.animateWindowBounds()) {
                         // Tabs join the rail only in the system's strip (iPhone Duo); elsewhere they stay in the content.
@@ -162,7 +165,7 @@ fun AdaptiveScaffold(
                     }
                 }
             },
-            {
+            bottomBar = {
                 if (edge == null && tools.isNotEmpty()) {
                     FadeInOnEnter(Modifier.animateWindowBounds()) {
                         Row(
@@ -175,7 +178,7 @@ fun AdaptiveScaffold(
                     }
                 }
             },
-            {
+            body = {
                 Box(Modifier.animateWindowBounds()) {
                     content(contentPadding)
                     if (edge == null && floatingAction != null) {
@@ -189,8 +192,27 @@ fun AdaptiveScaffold(
                     Box(Modifier.align(Alignment.BottomCenter).padding(contentPadding)) { snackbarHost() }
                 }
             },
-        ),
-    ) { (top, rail, bottom, body), constraints ->
+        )
+    }
+}
+
+/**
+ * Places the scaffold's parts: [body] below [topBar] and above [bottomBar], beside [rail] when the
+ * bars are on the side, or with [rail] in [systemBar]'s strip and [body] filling the window.
+ */
+@Composable
+private fun ScaffoldLayout(
+    edge: BarEdge?,
+    systemBar: SystemVerticalBar?,
+    topBar: @Composable () -> Unit,
+    rail: @Composable () -> Unit,
+    bottomBar: @Composable () -> Unit,
+    body: @Composable () -> Unit,
+) {
+    Layout(
+        modifier = Modifier.fillMaxSize(),
+        contents = listOf(topBar, rail, bottomBar, body),
+    ) { (top, side, bottom, main), constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val railAtStart = edge == BarEdge.Start
@@ -199,11 +221,11 @@ fun AdaptiveScaffold(
             val stripTop = systemBar.top.roundToPx()
             val stripHeight = (height - stripTop - systemBar.bottom.roundToPx()).coerceAtLeast(0)
             val stripWidth = systemBar.width.roundToPx()
-            val sideRail = rail.firstOrNull()?.measure(Constraints.fixed(stripWidth, stripHeight))
-            val main = body.first().measure(Constraints.fixed(width, height))
+            val sideRail = side.firstOrNull()?.measure(Constraints.fixed(stripWidth, stripHeight))
+            val content = main.first().measure(Constraints.fixed(width, height))
             val inset = systemBar.edgeInset.roundToPx()
             return@Layout layout(width, height) {
-                main.placeRelative(0, 0)
+                content.placeRelative(0, 0)
                 sideRail?.placeRelative(if (railAtStart) inset else width - inset - stripWidth, stripTop)
             }
         }
@@ -211,13 +233,13 @@ fun AdaptiveScaffold(
         val bottomBar = bottom.firstOrNull()?.measure(Constraints(minWidth = width, maxWidth = width, maxHeight = height))
         val topHeight = topBar?.height ?: 0
         val bottomHeight = bottomBar?.height ?: 0
-        val sideRail = rail.firstOrNull()?.measure(Constraints(maxWidth = width, minHeight = height, maxHeight = height))
+        val sideRail = side.firstOrNull()?.measure(Constraints(maxWidth = width, minHeight = height, maxHeight = height))
         val railWidth = sideRail?.width ?: 0
         val bodyWidth = (width - railWidth).coerceAtLeast(0)
         val bodyHeight = (height - topHeight - bottomHeight).coerceAtLeast(0)
-        val main = body.first().measure(Constraints.fixed(bodyWidth, bodyHeight))
+        val content = main.first().measure(Constraints.fixed(bodyWidth, bodyHeight))
         layout(width, height) {
-            main.placeRelative(if (railAtStart) railWidth else 0, topHeight)
+            content.placeRelative(if (railAtStart) railWidth else 0, topHeight)
             topBar?.placeRelative(0, 0)
             bottomBar?.placeRelative(0, height - bottomHeight)
             sideRail?.placeRelative(if (railAtStart) 0 else width - railWidth, 0)
