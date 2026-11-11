@@ -20,7 +20,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.awaitCancellation
@@ -37,6 +39,18 @@ private class AndroidBoothCamera(private val context: Context) : BoothCamera {
         private set
     private var surfaceRequest by mutableStateOf<SurfaceRequest?>(null)
     private val imageCapture = ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build()
+    private var preview: Preview? = null
+
+    /**
+     * The display's rotation, for the preview and saved photos. The activity handles rotation and
+     * folding itself, so the use cases outlive those changes and must follow the display.
+     */
+    private var rotation: Int = imageCapture.targetRotation
+        set(value) {
+            field = value
+            imageCapture.targetRotation = value
+            preview?.targetRotation = value
+        }
     private val shutterSound = MediaActionSound().apply { load(MediaActionSound.SHUTTER_CLICK) }
 
     override fun switchCamera() {
@@ -54,6 +68,13 @@ private class AndroidBoothCamera(private val context: Context) : BoothCamera {
     @Composable
     override fun Preview(modifier: Modifier) {
         val lifecycleOwner = LocalLifecycleOwner.current
+        val view = LocalView.current
+        // Each rotation (including 180°) and fold reaches the composition as a new configuration;
+        // by then the view's display reports the new rotation.
+        val configuration = LocalConfiguration.current
+        LaunchedEffect(configuration, view) {
+            view.display?.let { rotation = it.rotation }
+        }
         LaunchedEffect(front, lifecycleOwner) {
             val provider = ProcessCameraProvider.awaitInstance(context)
             val hasFront = provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)
@@ -66,9 +87,10 @@ private class AndroidBoothCamera(private val context: Context) : BoothCamera {
                 else -> return@LaunchedEffect
             }
             front = useFront
-            val preview = Preview.Builder().build().apply {
+            val preview = Preview.Builder().setTargetRotation(rotation).build().apply {
                 setSurfaceProvider { request -> surfaceRequest = request }
             }
+            this@AndroidBoothCamera.preview = preview
             val lens = if (useFront) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
             provider.unbindAll()
             provider.bindToLifecycle(lifecycleOwner, CameraSelector.Builder().requireLensFacing(lens).build(), preview, imageCapture)

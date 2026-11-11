@@ -3,6 +3,7 @@ package com.jackcheung.collage.platform
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.jackcheung.collage.ui.adaptive.SystemVerticalBar
 import org.jetbrains.compose.resources.StringResource
 
 /** Asks for photo library access; [onResult] runs once the user has answered. */
@@ -38,6 +39,13 @@ expect fun platformColorScheme(dark: Boolean): ColorScheme?
 /** Light status/navigation bar icons while composed, for always-dark screens. */
 @Composable
 expect fun LightSystemBarIcons()
+
+/**
+ * Where the system places app controls on the vertical axis (iPhone Duo), or null where the
+ * platform has no such placement; the app then decides from the window shape.
+ */
+@Composable
+expect fun systemVerticalBar(): SystemVerticalBar?
 
 /** Where a saved collage ends up, shown after saving. */
 expect val savedCollageMessage: StringResource
